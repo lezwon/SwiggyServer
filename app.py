@@ -22,7 +22,7 @@ def search_items():
 	else:
 		cost='$$$$'
 
-	url = 'https://www.swiggy.com/api/restaurants/search?third_party_vendor=1&lat=12.9345625&lng=77.60613179999996&page=ITEM&str= '+dish+'&cost_for_two= '+cost
+	url = 'https://www.swiggy.com/api/restaurants/search?third_party_vendor=1&lat=12.9345625&lng=77.60613179999996&page=ITEM&str= '+dish
 	res = requests.get(url)
 	print url
 	return res.text
