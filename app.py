@@ -3,6 +3,7 @@ from flask import request
 from flask_cors import CORS, cross_origin
 import requests
 import LatLon
+import psycopg2
 
 app = Flask(__name__)
 cors = CORS(app)
