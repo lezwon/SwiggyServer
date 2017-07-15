@@ -1,7 +1,6 @@
 from flask import Flask
 from flask import request
 from flask_cors import CORS, cross_origin
-from geopy.distance import vincenty
 import requests
 import LatLon
 
@@ -37,9 +36,8 @@ def search_items():
 	print url
 	return res.text
 
-insert_into_table(user,lat,lon):
+def insert_into_table(user,lat,lon):
 	# Connect to an existing database
-
 	lat = float(lat)
 	lon = float(lon)
 
@@ -60,7 +58,7 @@ insert_into_table(user,lat,lon):
 	cur.close()
 
 
-query_from_table(lat,lon):
+def query_from_table(lat,lon):
 	# Connect to an existing database
 	lat = float(lat)
 	lon = float(lon)
