@@ -1,10 +1,14 @@
 from flask import Flask
 from flask import request
+from flask_cors import CORS, cross_origin
 import requests
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route('/search')
+@cross_origin()
 def search_items():
 	dish = request.args['dish']
 	budget = int(request.args['budget'])
