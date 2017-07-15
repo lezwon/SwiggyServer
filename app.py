@@ -75,7 +75,7 @@ def query_from_table(lat,lon):
 	cur.execute("SELECT * from location WHERE lat in between "+offsetTop+" and "+offsetBottom +"and lon in between "+offsetRight+" and "+offsetLeft)
 	rows = cur.fetchall()
 	for row in rows:
-    	print "   ", row[1][1]
+		print "   ", row[1][1]
 	# Close communication with the database
 	cur.close()
 
