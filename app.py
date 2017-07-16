@@ -94,7 +94,7 @@ def set_location():
 	insert_into_table(user,lat,lon)
 	return "Your location has been successfully set"
 
-@app.route('/getLocalClients', methods=['POST'])
+@app.route('/cancelledOrder', methods=['POST'])
 def get_local_clients():
 	lat = request.args['lat']
 	lon = request.args['lon']
