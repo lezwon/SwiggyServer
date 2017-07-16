@@ -50,7 +50,8 @@ def insert_into_table(user,lat,lon):
 
 	# Pass data to fill a query placeholders and let Psycopg perform
 	# the correct conversion (no more SQL injections!)
-	cur.execute("INSERT INTO location (id, lat, lon) VALUES (%s, %s, %s)",(user, lat, lon))
+	# cur.execute("INSERT INTO location (id, lat, lon) VALUES (%s, %s, %s)",(user, lat, lon))
+	cur.execute("UPDATE location SET lat = %s, lon = %s where id = %s",(user,lat,lon))
 
 	# Make the changes to the database persistent
 	conn.commit()
@@ -74,11 +75,13 @@ def query_from_table(lat,lon):
 	response = ''
 	# Open a cursor to perform database operations
 	cur = conn.cursor()
-	sql = "SELECT * from location WHERE lat between %s and %s and lon between %s and %s"
-	cur.execute(sql, (offsetTop,offsetBottom,offsetRight,offsetLeft))
+	sql = "SELECT * from location WHERE lat between %s and %s"
+	# sql = "SELECT * from location WHERE lat between %s and %s and lon between %s and %s"
+	# cur.execute(sql, (offsetTop,offsetBottom,offsetRight,offsetLeft))
+	cur.execute(sql, (offsetTop,offsetBottom))
 	rows = cur.fetchall()
 	for row in rows:
-		response+='\n'+row[0]+"\t"+row[1]+"\t"+row[2]+"\t"
+		response+='\n'+str(row[0])+"\t"+str(row[1])+"\t"+str(row[2])+"\t"
 	# Close communication with the database
 	cur.close()
 	return response
@@ -96,6 +99,22 @@ def get_local_clients():
 	lat = request.args['lat']
 	lon = request.args['lon']
 	return query_from_table(lat,lon)
+
+@app.route('/placeOrder', methods=['POST'])
+def place_order():
+	restaurant_name = request.args['restaurant']
+	item = request.args['item']
+	url = 'https://www.swiggy.com/api/restaurants/search?third_party_vendor=1&lat=12.9345625&lng=77.60613179999996&page=ITEM&str= '+item
+	response = requests.get(url)
+	data = JSON.loads(response.text)
+	for restaurant in data['data']['restaurants'][0]['restaurants'][:6]:
+		if(restaurant['name'] == restaurant_name):
+			for menu in restaurant['menuItems']:
+				if menu['name'] == item:
+					price = menu['price']
+					rest_id = menu['slugs']['restaurant']
+					return "Order: "+menu['name']+"\n"+"Price: "+price+"\n"+"Restaurant: "+restaurant_name
+
 
 if __name__ == '__main__':
     app.run()
