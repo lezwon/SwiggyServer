@@ -2,7 +2,7 @@ from flask import Flask
 from flask import request
 from flask_cors import CORS, cross_origin
 import requests
-import LatLon
+from LatLon import LatLon
 import psycopg2
 
 app = Flask(__name__)
@@ -21,16 +21,16 @@ conn = psycopg2.connect(
 @cross_origin()
 def search_items():
 	dish = request.args['dish']
-	budget = int(request.args['budget'])
-	cost = None
-	if(budget < 500):
-		cost='$'
-	elif(budget < 1000):
-		cost='$$'
-	elif(budget < 2000):
-		cost='$$$'
-	else:
-		cost='$$$$'
+	# budget = int(request.args['budget'])
+	# cost = None
+	# if(budget < 500):
+	# 	cost='$'
+	# elif(budget < 1000):
+	# 	cost='$$'
+	# elif(budget < 2000):
+	# 	cost='$$$'
+	# else:
+	# 	cost='$$$$'
 
 	url = 'https://www.swiggy.com/api/restaurants/search?third_party_vendor=1&lat=12.9345625&lng=77.60613179999996&page=ITEM&str= '+dish
 	res = requests.get(url)
@@ -46,11 +46,11 @@ def insert_into_table(user,lat,lon):
 	cur = conn.cursor()
 
 	# Execute a command: this creates a new table
-	cur.execute("CREATE TABLE location IF NOT EXISTS (id serial PRIMARY KEY, lat decimal, lon decimal);")
+	cur.execute("CREATE TABLE IF NOT EXISTS location  (id serial PRIMARY KEY, lat decimal, lon decimal);")
 
 	# Pass data to fill a query placeholders and let Psycopg perform
 	# the correct conversion (no more SQL injections!)
-	cur.execute("INSERT INTO location (id, lat, lon) VALUES (%d, %f, %f)",(user, lat, lon))
+	cur.execute("INSERT INTO location (id, lat, lon) VALUES (%s, %s, %s)",(user, lat, lon))
 
 	# Make the changes to the database persistent
 	conn.commit()
@@ -65,28 +65,37 @@ def query_from_table(lat,lon):
 	lon = float(lon)
 
 	currentPos = LatLon(lat, lon)
-	offsetTop = currentPos.offset(90, 1)
-	offsetBottom = currentPos.offset(275, 1)
+	offsetTop = currentPos.offset(90, 1).lat.to_string('D')
+	offsetBottom = currentPos.offset(275, 1).lat.to_string('D')
 
-	offsetRight = currentPos.offset(0, 1)
-	offsetLeft = currentPos.offset(270, 1)
+	offsetRight = currentPos.offset(0, 1).lon.to_string('D')
+	offsetLeft = currentPos.offset(270, 1).lon.to_string('D')
+
+	response = ''
 	# Open a cursor to perform database operations
 	cur = conn.cursor()
-
-	cur.execute("SELECT * from location WHERE lat in between "+offsetTop+" and "+offsetBottom +"and lon in between "+offsetRight+" and "+offsetLeft)
+	sql = "SELECT * from location WHERE lat between %s and %s and lon between %s and %s"
+	cur.execute(sql, (offsetTop,offsetBottom,offsetRight,offsetLeft))
 	rows = cur.fetchall()
 	for row in rows:
-		print "   ", row[1][1]
+		response+='\n'+row[0]+"\t"+row[1]+"\t"+row[2]+"\t"
 	# Close communication with the database
 	cur.close()
-
+	return response
 
 @app.route('/setlocation', methods=['POST'])
 def set_location():
 	lat = request.args['lat']
-	lon = int(request.args['lon'])
+	lon = request.args['lon']
+	user = request.args['user']
 	insert_into_table(user,lat,lon)
 	return "Your location has been successfully set"
+
+@app.route('/getLocalClients', methods=['POST'])
+def get_local_clients():
+	lat = request.args['lat']
+	lon = request.args['lon']
+	return query_from_table(lat,lon)
 
 if __name__ == '__main__':
     app.run()
